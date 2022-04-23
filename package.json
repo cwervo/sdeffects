@@ -1,0 +1,6 @@
+{
+  "dependencies": {
+    "three": "^0.139.2",
+    "tweakpane": "^3.0.8"
+  }
+}
