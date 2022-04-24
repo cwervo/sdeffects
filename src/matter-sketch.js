@@ -10,7 +10,7 @@ const PARAMS = {
 const pane = new Pane();
 pane.addInput(PARAMS, 'size', {
   stop: 0.01,
-  min: 0,
+  min: 0.01,
   max: 0.99,
 });
 pane.addInput(PARAMS, 'posOffset', {
@@ -121,15 +121,16 @@ void main(){
     vec2 pos = st - vec2(1.0, 1.0) - posOffset;
     // pct = sdBox((pos), boxDimensions);
     pct = step(sdBox(pos, boxDimensions), 1.0 - size);
-    // pct = circle(pos, size);
+    // pct = circle(pos, size) * vec3(0.5, 0.0, 0.0);
 
     // c. The SQUARE ROOT of the vector
     //    from the pixel to the center
     // vec2 tC = vec2(0.5)-st;
     // pct = sqrt(tC.x*tC.x+tC.y*tC.y);
-    vec3 color = vec3(pct);
+    vec3 color = pct * vec3(0.5, 0.5, 0.9); 
 
-	gl_FragColor = vec4( color, 1.0 );
+	gl_FragColor = vec4( color, 1.0);
+	// gl_FragColor = vec4(vec3(0.,0.,1.0), 0.5 );
 }
                 `,
   });
