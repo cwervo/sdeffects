@@ -4,7 +4,8 @@ import { Pane } from 'tweakpane';
 const PARAMS = {
   size: 0.5,
   posOffset: { x: 0, y: 0 },
-  boxDimensions: { x: 0, y: 0 }
+  boxDimensions: { x: 0, y: 0 },
+  baseColor: { r: 255, g: 0, b: 0 }
 };
 
 const pane = new Pane();
@@ -25,6 +26,7 @@ pane.addInput(PARAMS, 'boxDimensions', {
   x: { min: -1, max: 1, step: 0.01 },
   y: { min: -1, max: 1, step: 0.01, inverted: true},
 });
+pane.addInput(PARAMS, 'baseColor');
 
 // import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 // const controls = new OrbitControls(camera, renderer.domElement);
@@ -66,7 +68,8 @@ function init() {
     mouse: { type: "v2", value: new THREE.Vector2() },
     size : { type: "f", value: 0.1 },
     posOffset: { type: "v2", value: new THREE.Vector2() },
-    boxDimensions: { type: "v2", value: new THREE.Vector2() }
+    boxDimensions: { type: "v2", value: new THREE.Vector2() },
+    baseColor: { type: 'v3', value: new THREE.Vector3()}
   };
 
   material = new THREE.ShaderMaterial({
@@ -86,6 +89,7 @@ uniform float time;
 uniform float size;
 uniform vec2 posOffset;
 uniform vec2 boxDimensions;
+uniform vec3 baseColor;
 
 float sdCircle( vec2 p, float r ) {
     return length(p) - r;
@@ -127,7 +131,8 @@ void main(){
     //    from the pixel to the center
     // vec2 tC = vec2(0.5)-st;
     // pct = sqrt(tC.x*tC.x+tC.y*tC.y);
-    vec3 color = pct * vec3(0.5, 0.5, 0.9); 
+    // vec3 color = pct * vec3(0.5, 0.5, 0.9); 
+    vec3 color = pct * (baseColor / 255.0);
 
 	gl_FragColor = vec4( color, 1.0);
 	// gl_FragColor = vec4(vec3(0.,0.,1.0), 0.5 );
@@ -162,6 +167,7 @@ function render() {
   uniforms.size.value = PARAMS.size;
   uniforms.posOffset.value = PARAMS.posOffset;
   uniforms.boxDimensions.value = PARAMS.boxDimensions;
+  uniforms.baseColor.value = PARAMS.baseColor;
   console.log(uniforms.size.value)
   renderer.render(scene, camera);
 
