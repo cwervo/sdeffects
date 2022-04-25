@@ -1,7 +1,20 @@
 import * as THREE from 'three';
 import { Pane } from 'tweakpane';
+// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+// const controls = new OrbitControls(camera, renderer.domElement);
 
-const PARAMS = {};
+let container;
+let camera, scene, renderer;
+let uniforms, material, mesh;
+
+const PARAMS = {
+  preset: '',
+  quality: 0,
+};
+const PRESET_ARRAY = ['size', 'posOffset']
+    // circle: '0.003 -0.5 -0.5 0.3 0.3',
+
+const PRESETS = []
 
 class Param {
   constructor(name, value = 0.0, autoSetup = false) {
@@ -12,7 +25,7 @@ class Param {
     }
   }
   setup(optionsMap) {
-    pane.addInput(PARAMS, this.name, optionsMap)
+    this.input = pane.addInput(PARAMS, this.name, optionsMap)
   }
 }
 
@@ -46,13 +59,25 @@ tile.setup({
   max: 10.0,
 })
 
-console.log('hmmmm')
+let activePreset = new Param('preset', 'circle')
+activePreset.setup({
+  options: {
+    none: '',
+    circle: '0.4 -0.5 -0.5 0 0',
+    square: '0.03 -0.5 -0.5 0.3 0.3',
+  },
+});
 
-// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-// const controls = new OrbitControls(camera, renderer.domElement);
-var container;
-var camera, scene, renderer;
-var uniforms, material, mesh;
+activePreset.input.on('change', (e) => {
+  console.log();
+  const presetNums = e.value.split(' ').map(n => parseFloat(n));
+  PARAMS.size = presetNums[0];
+  PARAMS.posOffset.x = presetNums[1]
+  PARAMS.posOffset.y = presetNums[2]
+  PARAMS.boxDimensions.x = presetNums[3]
+  PARAMS.boxDimensions.y = presetNums[4]
+})
+
 // var mouseX = 0,
 //   mouseY = 0,
 //   lat = 0,
@@ -133,31 +158,30 @@ float circle(vec2 _st, float _radius){
 }
 
 void main(){
+  // size = 0.3, posOffset = -.5, boxDim = 0.0 => gird of circles!
+
 	vec2 st = gl_FragCoord.xy/resolution;
-    float pct = 0.0;
-    // vec2 pos = st - vec2(1.0, 1.0) - (posOffset - vec2(.5));
-    // TODO: fix the transofrmation to the center
-    vec2 pos = st - posOffset - vec2(3. * (size + boxDimensions.x + boxDimensions.y));
+  float pct = 0.0;
+  vec2 pos = st - posOffset - vec2(3. * (size + boxDimensions.x + boxDimensions.y));
 
-    // 0 - 0.99 => make 4, with different thicknesses b/c of overlap, 0.1 most thick, 0.99 least thick
-    // 0.5 => make 4
-    // 1.1 = make 4 with a bit of an inset
-    pos *= tile; // Scale up the space by 3
-    pos = fract(pos); // Wrap around 1.0
+  // 0 - 0.99 => make 4, with different thicknesses b/c of overlap, 0.1 most thick, 0.99 least thick
+  // 0.5 => make 4
+  // 1.1 = make 4 with a bit of an inset
+  pos *= tile; // Scale up the space by 3
+  pos = fract(pos); // Wrap around 1.0
 
-    pos += posOffset;
+  pos += posOffset;
 
-    /*
-    step(
-    maxTheBox,
-    determin its thickness
-    )
-    */
-    pct = step(sdBox(pos, boxDimensions), 1.0 - size);
-    vec3 color = pct * (baseColor / 255.0) * 1.2;
+  /*
+  step(
+  maxTheBox,
+  determin its thickness
+  )
+  */
+  pct = step(sdBox(pos, boxDimensions), 1.0 - size);
+  vec3 color = pct * (baseColor / 255.0) * 1.2;
 
 	gl_FragColor = vec4( color, 1.0);
-	// gl_FragColor = vec4(vec3(0.,0.,1.0), 0.5 );
 }
                 `,
   });
@@ -193,7 +217,6 @@ function render() {
   uniforms.baseColor.value = PARAMS.baseColor;
   uniforms.tile.value = PARAMS.tile;
 
-  console.log(uniforms.size.value)
   renderer.render(scene, camera);
 
   // if (resizeRendererToDisplaySize(renderer)) {
@@ -251,7 +274,7 @@ function resizeRendererToDisplaySize(renderer) {
 // // const scene = new Scene();
 
 document.onmousemove = function(e) {
-  console.log('hello', e.pageX / window.innerWidth, uniforms.mouse.value)
+  // console.log('hello', e.pageX / window.innerWidth, uniforms.mouse.value)
   uniforms.mouse.value.x = e.pageX / window.innerWidth;
   uniforms.mouse.value.y = e.pageY / window.innerHeight;
 }
