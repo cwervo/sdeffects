@@ -1,32 +1,52 @@
 import * as THREE from 'three';
 import { Pane } from 'tweakpane';
 
-const PARAMS = {
-  size: 0.5,
-  posOffset: { x: 0, y: 0 },
-  boxDimensions: { x: 0, y: 0 },
-  baseColor: { r: 255, g: 0, b: 0 }
-};
+const PARAMS = {};
+
+class Param {
+  constructor(name, value = 0.0, autoSetup = false) {
+    this.name = name;
+    PARAMS[`${name}`] = value
+    if (autoSetup) {
+      this.setup({})
+    }
+  }
+  setup(optionsMap) {
+    pane.addInput(PARAMS, this.name, optionsMap)
+  }
+}
 
 const pane = new Pane();
-pane.addInput(PARAMS, 'size', {
+let size = new Param('size', 0.03)
+size.setup({
   stop: 0.01,
   min: 0.01,
-  max: 0.99,
-});
-pane.addInput(PARAMS, 'posOffset', {
+  max: 2.0,
+})
+let posOffset = new Param('posOffset', { x: -0.5, y: -0.5 })
+posOffset.setup({
   picker: 'inline',
   expanded: true,
   x: { min: -1, max: 1, step: 0.01 },
   y: { min: -1, max: 1, step: 0.01, inverted: true},
-});
-pane.addInput(PARAMS, 'boxDimensions', {
+})
+let boxDimensions = new Param('boxDimensions', { x: 0.3, y: 0.3 })
+boxDimensions.setup({
   picker: 'inline',
   expanded: true,
-  x: { min: -1, max: 1, step: 0.01 },
-  y: { min: -1, max: 1, step: 0.01, inverted: true},
-});
-pane.addInput(PARAMS, 'baseColor');
+  x: { min: -1, max: 1, step: 0.001 },
+  y: { min: -1, max: 1, step: 0.001, inverted: true},
+})
+
+let baseColor= new Param('baseColor', { r: 93, g: 93, b:  180 }, true)
+let tile = new Param('tile', 3)
+tile.setup({ 
+  stop: 0.01,
+  min: 0.1,
+  max: 10.0,
+})
+
+console.log('hmmmm')
 
 // import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 // const controls = new OrbitControls(camera, renderer.domElement);
@@ -69,7 +89,8 @@ function init() {
     size : { type: "f", value: 0.1 },
     posOffset: { type: "v2", value: new THREE.Vector2() },
     boxDimensions: { type: "v2", value: new THREE.Vector2() },
-    baseColor: { type: 'v3', value: new THREE.Vector3()}
+    baseColor: { type: 'v3', value: new THREE.Vector3()},
+    tile: { type: 'f', value: 1.1}
   };
 
   material = new THREE.ShaderMaterial({
@@ -90,6 +111,8 @@ uniform float size;
 uniform vec2 posOffset;
 uniform vec2 boxDimensions;
 uniform vec3 baseColor;
+uniform float tile;
+// TODO: make this a string insertion to add Param uniform!!!
 
 float sdCircle( vec2 p, float r ) {
     return length(p) - r;
@@ -112,27 +135,26 @@ float circle(vec2 _st, float _radius){
 void main(){
 	vec2 st = gl_FragCoord.xy/resolution;
     float pct = 0.0;
-    
-    // a. The DISTANCE from the pixel to the center
-    pct = distance(st,vec2(0.5));
+    // vec2 pos = st - vec2(1.0, 1.0) - (posOffset - vec2(.5));
+    // TODO: fix the transofrmation to the center
+    vec2 pos = st - posOffset - vec2(3. * (size + boxDimensions.x + boxDimensions.y));
 
-    // b. The LENGTH of the vector
-    //    from the pixel to the center
-    vec2 toCenter = vec2(sin(time * 0.1))-st;
-    pct = length(toCenter);
+    // 0 - 0.99 => make 4, with different thicknesses b/c of overlap, 0.1 most thick, 0.99 least thick
+    // 0.5 => make 4
+    // 1.1 = make 4 with a bit of an inset
+    pos *= tile; // Scale up the space by 3
+    pos = fract(pos); // Wrap around 1.0
 
-    // start at bottom left, move to center
-    vec2 pos = st - vec2(1.0, 1.0) - posOffset;
-    // pct = sdBox((pos), boxDimensions);
+    pos += posOffset;
+
+    /*
+    step(
+    maxTheBox,
+    determin its thickness
+    )
+    */
     pct = step(sdBox(pos, boxDimensions), 1.0 - size);
-    // pct = circle(pos, size) * vec3(0.5, 0.0, 0.0);
-
-    // c. The SQUARE ROOT of the vector
-    //    from the pixel to the center
-    // vec2 tC = vec2(0.5)-st;
-    // pct = sqrt(tC.x*tC.x+tC.y*tC.y);
-    // vec3 color = pct * vec3(0.5, 0.5, 0.9); 
-    vec3 color = pct * (baseColor / 255.0);
+    vec3 color = pct * (baseColor / 255.0) * 1.2;
 
 	gl_FragColor = vec4( color, 1.0);
 	// gl_FragColor = vec4(vec3(0.,0.,1.0), 0.5 );
@@ -163,11 +185,14 @@ function animate() {
 function render() {
   var elapsedMilliseconds = Date.now() - startTime;
   var elapsedSeconds = elapsedMilliseconds / 1000;
+
   uniforms.time.value = 60 * elapsedSeconds;
   uniforms.size.value = PARAMS.size;
   uniforms.posOffset.value = PARAMS.posOffset;
   uniforms.boxDimensions.value = PARAMS.boxDimensions;
   uniforms.baseColor.value = PARAMS.baseColor;
+  uniforms.tile.value = PARAMS.tile;
+
   console.log(uniforms.size.value)
   renderer.render(scene, camera);
 
