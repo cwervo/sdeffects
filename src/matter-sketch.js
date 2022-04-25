@@ -34,7 +34,7 @@ class Param {
 const pane = new Pane();
 let size = new Param('size', 0.03)
 size.setup({
-  stop: 0.01,
+  step: 0.001,
   min: 0.01,
   max: 2.0,
 })

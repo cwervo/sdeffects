@@ -2,5 +2,8 @@
   "dependencies": {
     "three": "^0.139.2",
     "tweakpane": "^3.0.8"
+  },
+  "devDependencies": {
+    "@parcel/transformer-glsl": "^2.4.1"
   }
 }

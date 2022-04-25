@@ -10,6 +10,28 @@ uniform vec2 posOffset;
 uniform vec2 boxDimensions;
 uniform vec3 baseColor;
 uniform float tile;
+
+vec2 coord(in vec2 p) {
+	p = p / resolution.xy;
+	// correct aspect ratio
+	if (resolution.x > resolution.y) {
+		p.x *= resolution.x / resolution.y;
+		p.x += (resolution.y - resolution.x) / resolution.y / 2.0;
+	} else {
+		p.y *= resolution.y / resolution.x;
+		p.y += (resolution.x - resolution.y) / resolution.x / 2.0;
+	}
+	// centering
+	p -= 0.5;
+	p *= vec2(-1.0, 1.0);
+	return p;
+}
+
+#define rx 1.0 / min(resolution.x, resolution.y)
+#define uv gl_FragCoord.xy / resolution.xy
+#define st coord(gl_FragCoord.xy)
+#define mx coord(u_mouse)
+
 // TODO: make this a string insertion to add Param uniform!!!
 
 float sdCircle( vec2 p, float r ) {
@@ -30,16 +52,16 @@ float circle(vec2 _st, float _radius){
                          dot(dist,dist)*4.0);
 }
 
+// size = 0.3, posOffset = -.5, boxDim = 0.0 => gird of circles!
 void main(){
-  // size = 0.3, posOffset = -.5, boxDim = 0.0 => gird of circles!
-
-	vec2 st = gl_FragCoord.xy/resolution;
   float pct = 0.0;
   vec2 pos = st - posOffset - vec2(3. * (size + boxDimensions.x + boxDimensions.y));
 
-  // 0 - 0.99 => make 4, with different thicknesses b/c of overlap, 0.1 most thick, 0.99 least thick
-  // 0.5 => make 4
-  // 1.1 = make 4 with a bit of an inset
+  /*
+    0 - 0.99 => make 4, with different thicknesses b/c of overlap, 0.1 most thick, 0.99 least thick
+    0.5 => make 4
+    1.1 = make 4 with a bit of an inset
+  */
   pos *= tile; // Scale up the space by 3
   pos = fract(pos); // Wrap around 1.0
 
