@@ -59,23 +59,27 @@ tile.setup({
   max: 10.0,
 })
 
-let activePreset = new Param('preset', 'circle')
+let activePreset = new Param('preset', '')
 activePreset.setup({
   options: {
     none: '',
     circle: '0.4 -0.5 -0.5 0 0',
     square: '0.03 -0.5 -0.5 0.3 0.3',
+    squareThick: '0.16 -0.5 -0.5 0.3 0.3',
+    quarterCircle: '1 0.5 0.5 0.5 0.5',
   },
 });
 
-activePreset.input.on('change', (e) => {
-  console.log();
-  const presetNums = e.value.split(' ').map(n => parseFloat(n));
+activePreset.input.on('change', ({value}) => {
+  if (value === 'none') return
+
+  const presetNums = value.split(' ').map(n => parseFloat(n));
   PARAMS.size = presetNums[0];
   PARAMS.posOffset.x = presetNums[1]
   PARAMS.posOffset.y = presetNums[2]
   PARAMS.boxDimensions.x = presetNums[3]
   PARAMS.boxDimensions.y = presetNums[4]
+  pane.refresh()
 })
 
 // var mouseX = 0,
