@@ -62,6 +62,7 @@ let baseColor= new Param('baseColor', { r: 93, g: 93, b:  180 }, true)
 let tile = new Param('tile', 3)
 tile.setup({ 
   stop: 0.01,
+  step: 0.01,
   min: 0.1,
   max: 10.0,
 })
@@ -70,23 +71,40 @@ let activePreset = new Param('preset', '')
 activePreset.setup({
   options: {
     none: '',
-    circle: '0.4 -0.5 -0.5 0 0',
-    square: '0.03 -0.5 -0.5 0.3 0.3',
-    squareThick: '0.16 -0.5 -0.5 0.3 0.3',
-    quarterCircle: '1 0.5 0.5 0.5 0.5',
+    //             thicc| X  | Y    | W | H | tile
+    circle:        '0.50 -0.5 -0.50  0.0 0.0 1.0',
+    square:        '0.03 -0.5 -0.50  0.3 0.3 _',
+    squareThick:   '0.16 -0.5 -0.50  0.3 0.3 _',
+    quarterCircle: '0.75  0.5  0.50  0.5 0.5 6',
+    singleCircle:  '0.05 -0.95 -0.05 0.0 0.0 0.25'
   },
 });
 
+function assignIFF(variable, IFFvariable) {
+  if (isNaN(IFFvariable)) return
+  //  const LEFT = eval(`PARAMS.${variable}`)
+   const LEFT =`PARAMS.${variable}`
+   const VALUE = eval(LEFT)
+   eval(`${LEFT} = (IFFvariable != undefined) ? IFFvariable : ${eval(LEFT)}`)
+  console.log(`${variable} attempting to be set to: ${VALUE} |  ${IFFvariable}`)
+  //  eval(`${LEFT} = IFFvariable || ${VALUE}`)
+  console.log(`set ${variable} to ${VALUE}`)
+}
+
 activePreset.input.on('change', ({value}) => {
   if (value === 'none') return
-
-  const presetNums = value.split(' ').map(n => parseFloat(n));
-  PARAMS.lineThickness = presetNums[0];
-  PARAMS.posOffset.x = presetNums[1]
-  PARAMS.posOffset.y = presetNums[2]
-  PARAMS.boxDimensions.x = presetNums[3]
-  PARAMS.boxDimensions.y = presetNums[4]
+  const presetNums = value.split(' ').map(n => parseFloat(n)).filter(n => n != undefined && !isNaN(n));
+  console.log(presetNums)
+  assignIFF('lineThickness', presetNums[0])
+  assignIFF('posOffset.x', presetNums[1])
+  assignIFF('posOffset.y', presetNums[2])
+  assignIFF('boxDimensions.x', presetNums[3])
+  assignIFF('boxDimensions.y', presetNums[4])
+  // PARAMS.boxDimensions.x = presetNums[3]
+  // PARAMS.boxDimensions.y = presetNums[4]
+  assignIFF('tile', presetNums[5])
   pane.refresh()
+  console.log('----- FINISH LOADING PRESET -----')
 })
 
 // var mouseX = 0,
