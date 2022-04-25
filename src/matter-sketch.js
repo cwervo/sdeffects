@@ -13,7 +13,7 @@ const PARAMS = {
   preset: '',
   quality: 0,
 };
-const PRESET_ARRAY = ['size', 'posOffset']
+const PRESET_ARRAY = ['lineThickness', 'posOffset']
     // circle: '0.003 -0.5 -0.5 0.3 0.3',
 
 const PRESETS = []
@@ -32,11 +32,16 @@ class Param {
 }
 
 const pane = new Pane();
-let size = new Param('size', 0.03)
-size.setup({
+let lineThickness = new Param('lineThickness', 0.03)
+lineThickness.setup({
   step: 0.001,
   min: 0.01,
   max: 2.0,
+  /*
+    TODO: associate `area` of box (boxDimensions.x * boxDimensions.y) w/ the thickness of the lines somehow?
+      probably not a param, it's most useful as an implicit relationship between the `lineThickness` & the `area`.
+  */
+  // max: 0.2
 })
 let posOffset = new Param('posOffset', { x: -0.5, y: -0.5 })
 posOffset.setup({
@@ -76,7 +81,7 @@ activePreset.input.on('change', ({value}) => {
   if (value === 'none') return
 
   const presetNums = value.split(' ').map(n => parseFloat(n));
-  PARAMS.size = presetNums[0];
+  PARAMS.lineThickness = presetNums[0];
   PARAMS.posOffset.x = presetNums[1]
   PARAMS.posOffset.y = presetNums[2]
   PARAMS.boxDimensions.x = presetNums[3]
@@ -117,7 +122,7 @@ function init() {
     time: { type: "f", value: 1.0 },
     resolution: { type: "v2", value: new THREE.Vector2() },
     mouse: { type: "v2", value: new THREE.Vector2() },
-    size : { type: "f", value: 0.1 },
+    lineThickness: { type: "f", value: 0.1 },
     posOffset: { type: "v2", value: new THREE.Vector2() },
     boxDimensions: { type: "v2", value: new THREE.Vector2() },
     baseColor: { type: 'v3', value: new THREE.Vector3()},
@@ -155,7 +160,7 @@ function render() {
   var elapsedSeconds = elapsedMilliseconds / 1000;
 
   uniforms.time.value = 60 * elapsedSeconds;
-  uniforms.size.value = PARAMS.size;
+  uniforms.lineThickness.value = PARAMS.lineThickness;
   uniforms.posOffset.value = PARAMS.posOffset;
   uniforms.boxDimensions.value = PARAMS.boxDimensions;
   uniforms.baseColor.value = PARAMS.baseColor;

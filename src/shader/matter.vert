@@ -5,7 +5,7 @@ precision mediump float;
 uniform vec2 resolution;
 uniform vec2 mouse;
 uniform float time;
-uniform float size;
+uniform float lineThickness;
 uniform vec2 posOffset;
 uniform vec2 boxDimensions;
 uniform vec3 baseColor;
@@ -52,10 +52,10 @@ float circle(vec2 _st, float _radius){
                          dot(dist,dist)*4.0);
 }
 
-// size = 0.3, posOffset = -.5, boxDim = 0.0 => gird of circles!
+// lineThickness = 0.3, posOffset = -.5, boxDim = 0.0 => gird of circles!
 void main(){
   float pct = 0.0;
-  vec2 pos = st - posOffset - vec2(3. * (size + boxDimensions.x + boxDimensions.y));
+  vec2 pos = st - posOffset - vec2(3. * (lineThickness + boxDimensions.x + boxDimensions.y));
 
   /*
     0 - 0.99 => make 4, with different thicknesses b/c of overlap, 0.1 most thick, 0.99 least thick
@@ -73,7 +73,7 @@ void main(){
   determin its thickness
   )
   */
-  pct = step(sdBox(pos, boxDimensions), 1.0 - size);
+  pct = step(sdBox(pos, boxDimensions), 1.0 - lineThickness);
   vec3 color = pct * (baseColor / 255.0) * 1.2;
 
 	gl_FragColor = vec4( color, 1.0);
