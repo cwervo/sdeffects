@@ -1,11 +1,8 @@
 import * as THREE from 'three';
 import { Pane } from 'tweakpane';
-// import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
-// const controls = new OrbitControls(camera, renderer.domElement);
 import matterVertexShader from './shader/matter.frag'
 import matterFragmentShader from './shader/matter.vert'
 
-let container;
 let camera, scene, renderer;
 let uniforms, material, mesh;
 
@@ -13,10 +10,6 @@ const PARAMS = {
   preset: '',
   quality: 0,
 };
-const PRESET_ARRAY = ['lineThickness', 'posOffset']
-    // circle: '0.003 -0.5 -0.5 0.3 0.3',
-
-const PRESETS = []
 
 class Param {
   constructor(name, value = 0.0, autoSetup = false) {
@@ -41,7 +34,6 @@ lineThickness.setup({
     TODO: associate `area` of box (boxDimensions.x * boxDimensions.y) w/ the thickness of the lines somehow?
       probably not a param, it's most useful as an implicit relationship between the `lineThickness` & the `area`.
   */
-  // max: 0.2
 })
 let posOffset = new Param('posOffset', { x: -0.5, y: -0.5 })
 posOffset.setup({
@@ -58,7 +50,8 @@ boxDimensions.setup({
   y: { min: -1, max: 1, step: 0.001, inverted: true},
 })
 
-let baseColor= new Param('baseColor', { r: 93, g: 93, b:  180 }, true)
+new Param('baseColor', { r: 93, g: 93, b:  180 }, true)
+
 let tile = new Param('tile', 3)
 tile.setup({ 
   stop: 0.01,
@@ -71,7 +64,7 @@ let activePreset = new Param('preset', '')
 activePreset.setup({
   options: {
     none: '',
-    //             thicc| X  | Y    | W | H | tile
+    //             thicc | X  |  Y  | W | H | tile
     circle:        '0.50 -0.5 -0.50  0.0 0.0 1.0',
     square:        '0.03 -0.5 -0.50  0.3 0.3 _',
     squareThick:   '0.16 -0.5 -0.50  0.3 0.3 _',
@@ -80,16 +73,31 @@ activePreset.setup({
   },
 });
 
+
 function assignIFF(variable, IFFvariable) {
   if (isNaN(IFFvariable)) return
-  //  const LEFT = eval(`PARAMS.${variable}`)
    const LEFT =`PARAMS.${variable}`
    const VALUE = eval(LEFT)
    eval(`${LEFT} = (IFFvariable != undefined) ? IFFvariable : ${eval(LEFT)}`)
   console.log(`${variable} attempting to be set to: ${VALUE} |  ${IFFvariable}`)
-  //  eval(`${LEFT} = IFFvariable || ${VALUE}`)
   console.log(`set ${variable} to ${VALUE}`)
 }
+
+function assignIFF_cgpt(variable, IFFvariable) {
+  if (isNaN(IFFvariable)) return;
+
+  const PARAMS = { [variable]: undefined }; // Assuming PARAMS is an object that you have
+
+  const currentValue = Reflect.get(PARAMS, variable);
+
+  const newValue = (IFFvariable !== undefined) ? IFFvariable : currentValue;
+
+  Reflect.set(PARAMS, variable, newValue);
+
+  console.log(`${variable} attempting to be set to: ${currentValue} | ${IFFvariable}`);
+  console.log(`set ${variable} to ${newValue}`);
+}
+
 
 activePreset.input.on('change', ({value}) => {
   if (value === 'none') return
@@ -100,36 +108,19 @@ activePreset.input.on('change', ({value}) => {
   assignIFF('posOffset.y', presetNums[2])
   assignIFF('boxDimensions.x', presetNums[3])
   assignIFF('boxDimensions.y', presetNums[4])
-  // PARAMS.boxDimensions.x = presetNums[3]
-  // PARAMS.boxDimensions.y = presetNums[4]
   assignIFF('tile', presetNums[5])
   pane.refresh()
   console.log('----- FINISH LOADING PRESET -----')
 })
-
-// var mouseX = 0,
-//   mouseY = 0,
-//   lat = 0,
-//   lon = 0,
-//   phy = 0,
-//   theta = 0;
-
-// var windowHalfX = window.innerWidth / 2;
-// var windowHalfY = window.innerHeight / 2;
 
 init();
 const startTime = Date.now();
 animate();
 
 function init() {
-  // const scene = new THREE.Scene();
-  // renderer.setSize(window.innerWidth, window.innerHeight);
-
-  // camera = new THREE.Camera();
   camera = new THREE.PerspectiveCamera(
     75,
     window.innerWidth / window.innerHeight,
-
     0.1,
     1000
   );
@@ -185,63 +176,19 @@ function render() {
   uniforms.tile.value = PARAMS.tile;
 
   renderer.render(scene, camera);
-
-  // if (resizeRendererToDisplaySize(renderer)) {
-  //   const canvas = renderer.domElement;
-  //   camera.aspect = canvas.clientWidth / canvas.clientHeight;
-  //   camera.updateProjectionMatrix();
-  // }
 }
-
-function resizeRendererToDisplaySize(renderer) {
-  const canvas = renderer.domElement;
-  const width = canvas.clientWidth;
-  const height = canvas.clientHeight;
-  const needResize = canvas.width !== width || canvas.height !== height;
-  if (needResize) {
-    renderer.setSize(width, height, false);
-  }
-  return needResize;
-}
-
-// ----- MODERN
-// const scene = new THREE.Scene();
-// const camera = new THREE.PerspectiveCamera(
-//   75,
-//   window.innerWidth / window.innerHeight,
-//   0.1,
-//   1000
-// );
-
-// const renderer = new THREE.WebGLRenderer();
-// renderer.setSize(window.innerWidth, window.innerHeight);
-// document.body.appendChild(renderer.domElement);
-
-// const geometry = new THREE.BoxGeometry();
-// const material = new THREE.MeshBasicMaterial({ color: 0x00ff00 });
-// const cube = new THREE.Mesh(geometry, material);
-// scene.add(cube);
-
-// camera.position.z = 5;
-
-// function animate() {
-//   requestAnimationFrame(animate);
-
-//   cube.rotation.x += 0.01;
-//   cube.rotation.y += 0.01;
-
-//   renderer.render(scene, camera);
-// }
-
-// animate();
-
-// // // Option 2: Import just the parts you need.
-// // import { Scene } from 'three';
-
-// // const scene = new Scene();
 
 document.onmousemove = function(e) {
-  // console.log('hello', e.pageX / window.innerWidth, uniforms.mouse.value)
   uniforms.mouse.value.x = e.pageX / window.innerWidth;
   uniforms.mouse.value.y = e.pageY / window.innerHeight;
 }
+
+document.addEventListener('DOMContentLoaded', () => {
+  window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight
+      camera.updateProjectionMatrix()
+
+      renderer.setSize(window.innerWidth, window.innerHeight);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  })
+});
